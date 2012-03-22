@@ -15,10 +15,22 @@ def base_dir
   File.dirname(__FILE__) + "/../lib/"
 end
 
+STYLE_DIRS = [base_dir + "impress_css"]
+
+def style_with(name)
+  dir = STYLE_DIRS.find do |dir|
+    File.exist? File.join(dir, name+'.css')
+  end
+  return unless dir
+  ['.css', '.html'].map {|ext| File.join(dir, name+ext) }
+end
+
 def list_available_stylesheets
   log "Available stylesheets:"
-  Dir.glob(base_dir + "impress_css/*.css").each do |file|
-    puts File.basename(file, ".css")
+  STYLE_DIRS.each do |dir|
+    Dir.glob(File.join(dir, "*.css")).each do |file|
+      puts File.basename(file, ".css")
+    end
   end
 end
 
@@ -80,14 +92,6 @@ end
 
 Trollop::die("no file specified") if ARGV.empty? # show help screen
 
-STYLESHEET = base_dir + "impress_css/#{OPTS[:stylesheet]}.css"
-STYLESHEET_HEAD = base_dir + "impress_css/#{OPTS[:stylesheet]}.html"
-
-unless File.exist?(STYLESHEET)
-  puts OPTS[:stylesheet] + " is not a valid stylesheet. See available stylesheets with `mdpress -l`."
-  exit
-end
-
 if OPTS[:run]
   file = ARGV[0]
   tmp = Tempfile.new("mdpress")
@@ -98,7 +102,17 @@ if OPTS[:run]
 else
   FILENAME = ARGV[0]
   DIRNAME = File.basename(FILENAME, File.extname(FILENAME))
+  STYLE_DIRS << File.dirname(FILENAME)
 end
+
+
+STYLESHEET, STYLESHEET_HEAD = style_with OPTS[:stylesheet]
+
+unless STYLESHEET
+  puts OPTS[:stylesheet] + " is not a valid stylesheet. See available stylesheets with `mdpress -l`."
+  exit
+end
+
 
 if File.exist?(DIRNAME)
   unless File.directory?(DIRNAME)
