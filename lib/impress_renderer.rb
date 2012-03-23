@@ -13,11 +13,24 @@ class ImpressRenderer < Redcarpet::Render::HTML
     @@head = head
   end
 
-  def hrule
+  def get_attrs(index=nil)
     # this is how we later inject attributes into pages. what an awful hack.
-    @@current += 1
+    index = @@current += 1 unless index
+    att = @@attrs[index]
+    class_att = "step"
+
+    # add user-specified class
+    if att =~ /class\s*=\s*"([^"]*)"/
+      att = $` + $'
+      class_att = "step #{$~[1]}"
+    end
+
+    return %{class="#{class_att}" #{att}}
+  end
+
+  def hrule
     %{</div>
-      <div class='step' #{@@attrs[@@current]}>
+      <div #{get_attrs}>
     }
   end
 
@@ -43,7 +56,7 @@ class ImpressRenderer < Redcarpet::Render::HTML
 
   <body onload="prettyPrint()">
     <div id="impress">
-    <div class='step' #{@@attrs[0]}>
+    <div #{get_attrs 0}>
     }
   end
 
